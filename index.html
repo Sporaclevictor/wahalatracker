@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wahala Tracker — Talk it out</title>
+<meta name="description" content="Talk through what annoyed you with a warm AI listener. Share screenshots, understand what's behind it, and leave with a plan." />
+<meta name="theme-color" content="#1f6f5c" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧘</text></svg>" />
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1d2a27;--muted:#5f6f6a;--line:#e3e0d8;--brand:#1f6f5c;--brand-ink:#fff;--accent:#e9a23b;--soft:#e8f2ee;--danger:#b3382c;--shadow:0 6px 24px rgba(31,60,52,.08);--radius:16px}
+@media (prefers-color-scheme:dark){:root{--bg:#101816;--card:#17221f;--ink:#e8f0ed;--muted:#93a7a0;--line:#26352f;--brand:#3fb394;--brand-ink:#07201a;--soft:#1a2c27;--shadow:0 6px 24px rgba(0,0,0,.35)}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{width:min(760px,100% - 32px);margin-inline:auto}
+button{font:inherit}
+.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-inner{display:flex;flex-direction:column;gap:10px;padding:12px 0 10px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{font-size:2rem}
+h1{font-size:1.2rem;margin:0;line-height:1.2}
+.tag{margin:0;color:var(--muted);font-size:.85rem}
+.tabs{display:flex;gap:6px;background:var(--soft);padding:4px;border-radius:999px}
+.tab{flex:1;border:0;background:transparent;color:var(--muted);font-weight:600;padding:8px 10px;border-radius:999px;cursor:pointer;transition:.15s}
+.tab.active{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+@media(min-width:560px){.top-inner{flex-direction:row;align-items:center;justify-content:space-between}.tabs{min-width:320px}}
+.view{display:none;padding:14px 0 8px;animation:fade .25s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2,.card h3{margin:0 0 6px}
+.card p{margin:0 0 8px}
+.muted{color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.center{justify-content:center}
+.btn{font-weight:700;border:1px solid transparent;border-radius:12px;padding:12px 18px;cursor:pointer;transition:transform .1s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.primary{background:var(--brand);color:var(--brand-ink)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.small{padding:7px 12px;font-size:.85rem}
+.btn.danger{color:var(--danger)}
+button:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--brand) 45%,transparent);outline-offset:1px}
+
+/* Chat */
+.chat-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.messages{display:flex;flex-direction:column;gap:12px;padding-bottom:14px}
+.msg{max-width:88%;padding:12px 14px;border-radius:18px;word-break:break-word}
+.msg.user{align-self:flex-end;background:var(--brand);color:var(--brand-ink);border-bottom-right-radius:6px}
+.msg.assistant{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg p{margin:0 0 8px}
+.msg p:last-child{margin:0}
+.msg ul{margin:4px 0 8px;padding-left:20px}
+.msg .imgs{margin-bottom:6px}
+.msg .imgs img{width:110px;height:110px;object-fit:cover;border-radius:10px;margin:0 6px 6px 0;display:inline-block}
+.msg .tagline{font-size:.82rem;opacity:.85}
+.dots{display:inline-flex;gap:4px;padding:4px 0}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite ease-in-out}
+.dots i:nth-child(2){animation-delay:.2s}
+.dots i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.err{align-self:flex-start;max-width:92%;background:color-mix(in srgb,var(--danger) 8%,var(--card));border:1px solid var(--danger);border-radius:14px;padding:12px 14px;font-size:.92rem}
+.care{align-self:flex-start;max-width:92%;background:var(--soft);border:1px solid var(--brand);border-radius:14px;padding:12px 14px;font-size:.92rem}
+.starters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:.9rem}
+.chip:hover{border-color:var(--brand);background:var(--soft)}
+.composer{position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 78%,transparent);padding:10px 0 calc(12px + env(safe-area-inset-bottom))}
+.comp-row{display:flex;gap:8px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:6px 6px 6px 8px;box-shadow:var(--shadow)}
+#input{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;resize:none;min-height:40px;max-height:160px;padding:9px 6px;outline:0;line-height:1.4}
+.icon-btn,.send{width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;flex:none;font-size:1.05rem}
+.icon-btn{background:var(--soft);color:var(--ink)}
+.send{background:var(--brand);color:var(--brand-ink);font-weight:700}
+.send:disabled{opacity:.45}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.thumb{position:relative;width:64px;height:64px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;line-height:1}
+.note{font-size:.8rem;color:var(--muted);margin:6px 4px 0;text-align:center;min-height:1.1em}
+.composer.over .comp-row{border-color:var(--brand);background:var(--soft)}
+
+/* Saved toast */
+.saved{background:var(--soft);border:1px solid var(--brand);border-radius:14px;padding:12px 14px;font-size:.92rem;margin-bottom:12px}
+
+/* Insights + History */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+.stat b{display:block;font-size:1.6rem;line-height:1.1}
+.stat small{color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:10px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px;font-size:.75rem;color:var(--muted)}
+.bar i{display:block;width:100%;border-radius:8px 8px 4px 4px;background:var(--brand);min-height:4px;opacity:.9}
+.bar i.hot{background:var(--danger)}
+.bar i.mid{background:var(--accent)}
+.insight{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.insight:last-child{border:0}
+.insight .ic{font-size:1.3rem}
+.meter{height:10px;background:var(--soft);border-radius:99px;overflow:hidden;margin:4px 0 10px}
+.meter span{display:block;height:100%;background:var(--brand)}
+.empty{text-align:center;color:var(--muted);padding:32px 12px}
+.history-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.history-head h2{margin:0;font-size:1.2rem}
+.entry{position:relative}
+.entry h3{font-size:1.05rem;padding-right:28px}
+.entry .meta{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:.8rem;margin-bottom:8px;flex-wrap:wrap}
+.entry .del{position:absolute;top:10px;right:10px;background:none;border:0;cursor:pointer;font-size:1rem;opacity:.6}
+.entry .del:hover{opacity:1}
+.entry dl{margin:8px 0 0}
+.entry dt{font-weight:700;font-size:.85rem;margin-top:8px}
+.entry dd{margin:2px 0 0}
+.entry details{margin-top:10px}
+.entry summary{cursor:pointer;color:var(--brand);font-weight:600;font-size:.9rem}
+.tx p{margin:6px 0;font-size:.88rem}
+.tx b{color:var(--muted)}
+.foot{text-align:center;color:var(--muted);font-size:.78rem;padding:14px 0 28px}
+.foot p{max-width:560px;margin:4px auto}
+
+dialog{border:0;border-radius:20px;padding:0;background:var(--card);color:var(--ink);width:min(380px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(8,18,15,.6);backdrop-filter:blur(3px)}
+.breathe-box{padding:24px;text-align:center}
+.orb{width:150px;height:150px;margin:18px auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--brand) 60%,white),var(--brand));display:grid;place-items:center;color:var(--brand-ink);font-weight:700;transition:transform 4s ease-in-out}
+.orb.in,.orb.hold{transform:scale(1.35)}
+.orb.out{transform:scale(.8);transition-duration:6s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🧘🏾</span>
+      <div><h1>Wahala Tracker</h1><p class="tag">Talk it out. Understand it. Move on.</p></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab active" data-view="talk" role="tab" aria-selected="true">Talk</button>
+      <button class="tab" data-view="insights" role="tab" aria-selected="false">Patterns</button>
+      <button class="tab" data-view="history" role="tab" aria-selected="false">Saved</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="view-talk" class="view active">
+    <div class="chat-bar">
+      <div class="row">
+        <button class="btn ghost small" id="breathe-open" type="button">🌬️ Breathe</button>
+      </div>
+      <div class="row">
+        <button class="btn ghost small" id="save-btn" type="button" hidden>💾 Save to tracker</button>
+        <button class="btn ghost small" id="new-btn" type="button">New chat</button>
+      </div>
+    </div>
+    <div id="saved-note"></div>
+    <div id="messages" class="messages" aria-live="polite"></div>
+    <div id="starters" class="starters"></div>
+
+    <form id="composer" class="composer" autocomplete="off">
+      <div id="attach-prev" class="thumbs"></div>
+      <div class="comp-row">
+        <button type="button" id="attach" class="icon-btn" aria-label="Attach a screenshot" title="Attach a screenshot">📎</button>
+        <textarea id="input" rows="1" maxlength="4000" placeholder="What's on your mind?"></textarea>
+        <button type="submit" id="send" class="send" aria-label="Send">➤</button>
+      </div>
+      <input type="file" id="file" accept="image/*" multiple hidden />
+      <p class="note" id="comp-note"></p>
+    </form>
+  </section>
+
+  <section id="view-insights" class="view"><div id="insights"></div></section>
+
+  <section id="view-history" class="view">
+    <div class="history-head">
+      <h2>Saved conversations</h2>
+      <div class="row">
+        <button class="btn ghost small" id="export" type="button">Export</button>
+        <button class="btn ghost small danger" id="clear" type="button">Clear all</button>
+      </div>
+    </div>
+    <div id="history"></div>
+  </section>
+
+  <footer class="foot">
+    <p>🔒 Chats are saved only on <strong>your device</strong>. To reply, your messages and screenshots are sent securely to Claude (by Anthropic) through this site, and are not kept by this site.</p>
+    <p>This is an AI companion for self-reflection, not a licensed therapist or a crisis service. If you feel unsafe, or things feel too heavy for days, please talk to someone you trust or a qualified professional.</p>
+  </footer>
+</main>
+
+<dialog id="breathe">
+  <div class="breathe-box">
+    <h3>Breathe with me</h3>
+    <div id="orb" class="orb"><span id="orb-text">Ready</span></div>
+    <p class="muted">In for 4 · hold for 4 · out for 6. Repeat 4 times.</p>
+    <div class="row center">
+      <button class="btn primary" id="breathe-start" type="button">Start</button>
+      <button class="btn ghost" id="breathe-close" type="button">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+
+const CHAT_KEY = 'wahala.chat.v2';
+const LOG_KEY = 'wahala.log.v2';
+const MAX_SHOTS = 3;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lsGet = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
+
+const CAT = {
+  work: ['💼', 'Work / School'], transport: ['🚌', 'Transport / Traffic'], money: ['💸', 'Money'], family: ['🏠', 'Family'],
+  relationship: ['💬', 'Relationship / Friends'], utilities: ['⚡', 'Light / Network / Data'], neighbours: ['🏘️', 'Neighbours / Landlord'],
+  health: ['🩺', 'Health / Body'], self: ['🪞', 'Myself'], social: ['📱', 'Social media'], other: ['🌀', 'General stress'],
+};
+const CRISIS = /(kill myself|end my life|suicid|want to die|wanna die|hurt myself|self[- ]?harm|no reason to live|better off dead)/i;
+
+/* ---------- State ---------- */
+let state = lsGet(CHAT_KEY, null) || { chat: [], start: 0, entryId: null };
+let chat = state.chat;      // [{role, text, shots?, images?}]
+let busy = false;
+let pending = [];           // attached screenshots for the next message [{url}]
+
+const persist = () => lsSet(CHAT_KEY, { chat: chat.map((m) => ({ role: m.role, text: m.text, shots: m.shots || 0 })), start: state.start, entryId: state.entryId });
+
+/* ---------- Text formatting ---------- */
+function fmt(t) {
+  const e = esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  return e.split(/\n{2,}/).map((p) => {
+    const lines = p.split('\n');
+    if (lines.every((l) => /^\s*[-•]\s+/.test(l))) return '<ul>' + lines.map((l) => '<li>' + l.replace(/^\s*[-•]\s+/, '') + '</li>').join('') + '</ul>';
+    return '<p>' + lines.join('<br>') + '</p>';
+  }).join('');
+}
+
+/* ---------- Chat rendering ---------- */
+const box = $('#messages');
+const nearBottom = () => window.innerHeight + window.scrollY >= document.body.scrollHeight - 160;
+const scrollDown = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+function bubble(role, text, imgs, shots) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + role;
+  let html = '';
+  if (imgs && imgs.length) html += '<div class="imgs">' + imgs.map((u) => `<img src="${esc(u)}" alt="Screenshot you shared" />`).join('') + '</div>';
+  else if (shots) html += `<p class="tagline">📷 ${shots} screenshot${shots > 1 ? 's' : ''} shared</p>`;
+  html += text ? fmt(text) : '';
+  el.innerHTML = html;
+  box.appendChild(el);
+  return el;
+}
+function greeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  return `${g}. I'm glad you're here.\n\nWhat's been sitting on your chest today? You can type it out just as it is, or share a screenshot of the chat or post that upset you, and we'll go through it together.`;
+}
+function renderAll() {
+  box.innerHTML = '';
+  bubble('assistant', greeting());
+  chat.forEach((m) => bubble(m.role, m.text, m.images, m.shots));
+  $('#starters').hidden = chat.length > 0;
+  updateSaveBtn();
+}
+function updateSaveBtn() {
+  $('#save-btn').hidden = !(chat.some((m) => m.role === 'assistant') && !busy);
+}
+
+const STARTERS = [
+  ['Something upset me today', 'Something upset me today and I need to talk about it.'],
+  ['I\'m stressed but don\'t know why', 'I\'m stressed and I can\'t really pinpoint why.'],
+  ['Someone is treating me badly', 'Someone is treating me badly and I don\'t know how to handle it.'],
+  ['📸 Show you a chat', null],
+];
+$('#starters').innerHTML = STARTERS.map((s, i) => `<button type="button" class="chip" data-i="${i}">${esc(s[0])}</button>`).join('');
+$$('.chip').forEach((c) => (c.onclick = () => {
+  const s = STARTERS[+c.dataset.i];
+  if (s[1]) { $('#input').value = s[1]; sendMessage(); } else $('#file').click();
+}));
+
+/* ---------- Sending + streaming ---------- */
+function setBusy(b) { busy = b; $('#send').disabled = b; updateSaveBtn(); }
+
+function sendMessage() {
+  if (busy) return;
+  const input = $('#input');
+  const text = input.value.trim();
+  if (!text && !pending.length) return;
+  if (!state.start) state.start = Date.now();
+  const imgs = pending.map((p) => p.url);
+  chat.push({ role: 'user', text, images: imgs.length ? imgs : undefined, shots: imgs.length });
+  bubble('user', text, imgs);
+  if (CRISIS.test(text)) state.care = true;
+  input.value = ''; input.style.height = 'auto';
+  pending = []; renderPending(); note('');
+  $('#starters').hidden = true;
+  persist();
+  scrollDown();
+  respond();
+}
+
+function payload() {
+  return chat.map((m) => ({ role: m.role, text: m.text, images: m.images || [] }));
+}
+
+async function respond() {
+  setBusy(true);
+  const el = document.createElement('div');
+  el.className = 'msg assistant';
+  el.innerHTML = '<div class="dots" aria-label="Thinking"><i></i><i></i><i></i></div>';
+  box.appendChild(el);
+  scrollDown();
+
+  let acc = '';
+  try {
+    const r = await fetch('/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'chat', messages: payload() }) });
+    if (!r.ok) {
+      let msg = 'Something went wrong. Please try again.';
+      if (r.status === 404) msg = 'The chat server is missing. Deploy the whole folder (including the api folder) to Vercel, or run it locally with "vercel dev".';
+      else if (r.status === 413) msg = 'Those screenshots are too big to send together. Try fewer or smaller images.';
+      else { try { const j = await r.json(); if (j.error) msg = j.error; } catch {} }
+      throw new Error(msg);
+    }
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const ev = buf.slice(0, i); buf = buf.slice(i + 2);
+        const line = ev.split('\n').find((l) => l.startsWith('data:'));
+        if (!line) continue;
+        let j; try { j = JSON.parse(line.slice(5).trim()); } catch { continue; }
+        if (j.type === 'content_block_delta' && j.delta && j.delta.type === 'text_delta') {
+          const stick = nearBottom();
+          acc += j.delta.text;
+          el.innerHTML = fmt(acc);
+          if (stick) window.scrollTo({ top: document.body.scrollHeight });
+        } else if (j.type === 'error') throw new Error('The connection was interrupted. Please try again.');
+      }
+    }
+    if (!acc.trim()) throw new Error('I did not get a reply. Please try again.');
+    chat.push({ role: 'assistant', text: acc });
+    chat.forEach((m) => { if (m.images) m.images = undefined; }); // images are only sent once
+    if (state.care) {
+      state.care = false;
+      const c = document.createElement('div');
+      c.className = 'care';
+      c.innerHTML = '💛 If you might hurt yourself or you are in danger, please contact your local emergency number or go to the nearest hospital, and tell someone near you right now. You do not have to carry this alone.';
+      box.appendChild(c);
+    }
+    persist();
+  } catch (e) {
+    el.remove();
+    const err = document.createElement('div');
+    err.className = 'err';
+    err.innerHTML = `<p>${esc(e.message || 'Something went wrong.')}</p><button class="btn ghost small" type="button">Try again</button>`;
+    $('button', err).onclick = () => { err.remove(); respond(); };
+    box.appendChild(err);
+  } finally {
+    setBusy(false);
+    scrollDown();
+  }
+}
+
+/* ---------- Composer ---------- */
+const input = $('#input');
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; });
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && matchMedia('(pointer:fine)').matches) { e.preventDefault(); sendMessage(); }
+});
+$('#composer').addEventListener('submit', (e) => { e.preventDefault(); sendMessage(); });
+const note = (t) => ($('#comp-note').textContent = t);
+
+/* ---------- Screenshots ---------- */
+function compress(file, max = 1400, q = 0.8) {
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      URL.revokeObjectURL(u);
+      const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+      let d = c.toDataURL('image/jpeg', q);
+      if (d.length > 1500000) d = c.toDataURL('image/jpeg', 0.55);
+      if (d.length > 1700000 && max > 1000) return compress(file, 1000, 0.6).then(res, rej);
+      res(d);
+    };
+    im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('bad image')); };
+    im.src = u;
+  });
+}
+async function addFiles(files) {
+  const imgs = [...files].filter((f) => f.type.startsWith('image/'));
+  if (!imgs.length) { note('Please choose image files (PNG or JPG screenshots).'); return; }
+  for (const f of imgs) {
+    if (pending.length >= MAX_SHOTS) { note(`You can add up to ${MAX_SHOTS} screenshots per message.`); break; }
+    try { pending.push({ url: await compress(f) }); note(''); }
+    catch { note('I could not open that image. Try a PNG or JPG.'); }
+  }
+  renderPending();
+  input.focus();
+}
+function renderPending() {
+  const p = $('#attach-prev');
+  p.innerHTML = pending.map((x, i) => `<div class="thumb"><img src="${esc(x.url)}" alt="Attached screenshot" /><button type="button" data-i="${i}" aria-label="Remove screenshot">×</button></div>`).join('');
+  $$('button', p).forEach((b) => (b.onclick = () => { pending.splice(+b.dataset.i, 1); renderPending(); }));
+}
+$('#attach').onclick = () => $('#file').click();
+$('#file').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+const comp = $('#composer');
+['dragenter', 'dragover'].forEach((ev) => comp.addEventListener(ev, (e) => { e.preventDefault(); comp.classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => comp.addEventListener(ev, (e) => { e.preventDefault(); comp.classList.remove('over'); }));
+comp.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
+document.addEventListener('paste', (e) => {
+  if (!$('#view-talk').classList.contains('active')) return;
+  const imgs = [...(e.clipboardData ? e.clipboardData.files : [])].filter((f) => f.type.startsWith('image/'));
+  if (imgs.length) { e.preventDefault(); addFiles(imgs); }
+});
+
+/* ---------- New chat / Save ---------- */
+$('#new-btn').onclick = () => {
+  if (busy) return;
+  if (chat.length && !state.entryId && !confirm('Start a new chat? This one has not been saved to your tracker.')) return;
+  chat = []; state = { chat, start: 0, entryId: null };
+  pending = []; renderPending(); $('#saved-note').innerHTML = '';
+  persist(); renderAll(); window.scrollTo({ top: 0 });
+};
+
+$('#save-btn').onclick = async () => {
+  if (busy) return;
+  const btn = $('#save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const r = await fetch('/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'summary', messages: payload().map((m) => ({ role: m.role, text: m.text || '(screenshot)', images: [] })) }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.summary) throw new Error(j.error || 'Could not save right now.');
+    const log = lsGet(LOG_KEY, []);
+    const id = state.entryId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+    const entry = Object.assign({}, j.summary, {
+      id, t: state.start || Date.now(),
+      shots: chat.reduce((n, m) => n + (m.shots || 0), 0),
+      transcript: chat.map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 1500) })),
+    });
+    const idx = log.findIndex((e) => e.id === id);
+    if (idx >= 0) log[idx] = entry; else log.push(entry);
+    if (!lsSet(LOG_KEY, log)) throw new Error('Your browser storage is full or blocked.');
+    state.entryId = id; persist();
+    const s = j.summary, c = CAT[s.category] || CAT.other;
+    $('#saved-note').innerHTML = `<div class="saved"><b>Saved ✓</b> ${c[0]} ${esc(s.title)} · ${s.intensity}/10<br><span class="muted">Next step: ${esc(s.next_step)}</span></div>`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) {
+    $('#saved-note').innerHTML = `<div class="saved" style="border-color:var(--danger)">${esc(e.message || 'Could not save.')}</div>`;
+  } finally { btn.disabled = false; btn.textContent = '💾 Save to tracker'; }
+};
+
+/* ---------- Patterns ---------- */
+const dayKey = (d) => { const x = new Date(d); return `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`; };
+const avg = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0);
+const mode = (a) => { const m = {}; a.forEach((x) => (m[x] = (m[x] || 0) + 1)); const e = Object.entries(m).sort((x, y) => y[1] - x[1])[0]; return e ? { key: e[0], n: e[1] } : null; };
+const timeBlock = (d) => { const h = new Date(d).getHours(); return h < 5 ? 'Late night' : h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night'; };
+
+function renderInsights() {
+  const list = lsGet(LOG_KEY, []);
+  const el = $('#insights');
+  if (!list.length) { el.innerHTML = `<div class="card empty"><p style="font-size:2rem;margin:0">📊</p><p>No data yet. After a chat, tap <b>Save to tracker</b> and your patterns will show up here.</p></div>`; return; }
+  const now = Date.now(), DAY = 86400000;
+  const last7 = list.filter((e) => now - e.t < 7 * DAY);
+  const prev7 = list.filter((e) => now - e.t >= 7 * DAY && now - e.t < 14 * DAY);
+  const todayN = list.filter((e) => dayKey(e.t) === dayKey(now)).length;
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now - i * DAY);
+    const items = list.filter((e) => dayKey(e.t) === dayKey(d));
+    days.push({ label: d.toLocaleDateString(undefined, { weekday: 'short' }), n: items.length, avg: avg(items.map((x) => x.intensity)) });
+  }
+  const maxN = Math.max(1, ...days.map((d) => d.n));
+  const bars = days.map((d) => `<div class="bar" title="${d.n} saved"><span>${d.n || ''}</span><i class="${d.avg >= 7 ? 'hot' : d.avg >= 4.5 ? 'mid' : ''}" style="height:${d.n ? (d.n / maxN) * 100 : 3}%"></i><span>${esc(d.label)}</span></div>`).join('');
+
+  const out = [];
+  const topCat = mode(list.map((e) => e.category));
+  if (topCat) { const c = CAT[topCat.key] || CAT.other; out.push(['🎯', `<b>Your biggest trigger zone: ${c[0]} ${esc(c[1])}</b> (${topCat.n} of ${list.length} saved chats).`]); }
+  const topTime = mode(list.map((e) => timeBlock(e.t)));
+  if (topTime && list.length >= 3) out.push(['⏰', `<b>Most of your wahala starts in the ${esc(topTime.key.toLowerCase())}.</b> A water break, a snack or a short pause just before then can help.`]);
+  if (last7.length && prev7.length) {
+    const a = avg(last7.map((e) => e.intensity)), b = avg(prev7.map((e) => e.intensity)), d = a - b;
+    if (Math.abs(d) >= 0.5) out.push([d < 0 ? '📉' : '📈', d < 0 ? `<b>Good sign:</b> your average intensity dropped from ${b.toFixed(1)} to ${a.toFixed(1)} compared with the week before.` : `<b>Heads up:</b> your average intensity rose from ${b.toFixed(1)} to ${a.toFixed(1)} compared with the week before. Be extra kind to yourself and check sleep and food.`]);
+  }
+  const withB = list.filter((e) => (e.body || []).length), withoutB = list.filter((e) => !(e.body || []).length);
+  if (withB.length >= 2 && withoutB.length >= 2) {
+    const a = avg(withB.map((e) => e.intensity)), b = avg(withoutB.map((e) => e.intensity));
+    if (a - b >= 0.8) out.push(['🍲', `<b>Your body matters:</b> when you were hungry, tired, lonely or rushed, your stress averaged ${a.toFixed(1)}/10 vs ${b.toFixed(1)}/10 otherwise.`]);
+  }
+  const shotsN = list.filter((e) => e.shots > 0).length;
+  if (shotsN >= 2) out.push(['📸', `<b>${shotsN} saved chats involved screenshots</b> of messages. If texting keeps being the trigger, try moving heavy topics to a call.`]);
+  const topR = mode(list.map((e) => e.reaction));
+  if (topR && list.length >= 3) {
+    const m = { exploded: 'You often react loudly. A pause phrase like "give me a minute" can protect you.', held: 'You often hold things in. A regular outlet (journaling, walks, a trusted friend) helps.', withdrew: 'You often withdraw. One honest line when you are ready can reopen the door.', vented: 'You often vent to others, which is healthy. End it with "what is my next step?".', laughed: 'You often laugh things off. Check you are not skipping real feelings.', cried: 'You often cry it out, a healthy release. Pair it with one small action afterwards.', none: 'You often pause before reacting. Good habit.' };
+    out.push(['🧠', `<b>Your usual style:</b> ${esc(m[topR.key] || '')}`]);
+  }
+  const counts = {};
+  list.forEach((e) => (counts[e.category] = (counts[e.category] || 0) + 1));
+  const breakdown = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, n]) => { const c = CAT[k] || CAT.other; return `<div>${c[0]} ${esc(c[1])} <small class="muted">· ${n}</small><div class="meter"><span style="width:${(n / list.length) * 100}%"></span></div></div>`; }).join('');
+  const steps = list.slice().sort((a, b) => b.t - a.t).slice(0, 4).filter((e) => e.next_step).map((e) => `<div class="insight"><span class="ic">🌱</span><div>${esc(e.next_step)}<br><small class="muted">${esc(new Date(e.t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))} · ${esc(e.title)}</small></div></div>`).join('');
+
+  el.innerHTML = `
+    <div class="stats">
+      <div class="stat"><b>${todayN}</b><small>Today</small></div>
+      <div class="stat"><b>${last7.length}</b><small>Last 7 days</small></div>
+      <div class="stat"><b>${last7.length ? avg(last7.map((e) => e.intensity)).toFixed(1) : '–'}</b><small>Avg intensity</small></div>
+    </div>
+    <div class="card"><h3>Last 7 days</h3><div class="bars">${bars}</div></div>
+    <div class="card"><h3>What I'm noticing</h3>${out.length ? out.map(([i, t]) => `<div class="insight"><span class="ic">${i}</span><div>${t}</div></div>`).join('') : '<p class="muted">Save a few more chats and I will start spotting patterns.</p>'}</div>
+    ${steps ? `<div class="card"><h3>Things you can try</h3>${steps}</div>` : ''}
+    <div class="card"><h3>Where your wahala comes from</h3>${breakdown}</div>`;
+}
+
+/* ---------- Saved ---------- */
+function renderHistory() {
+  const list = lsGet(LOG_KEY, []).slice().sort((a, b) => b.t - a.t);
+  const el = $('#history');
+  if (!list.length) { el.innerHTML = `<div class="card empty"><p style="font-size:2rem;margin:0">📝</p><p>Nothing saved yet.</p></div>`; return; }
+  el.innerHTML = list.map((e) => {
+    const c = CAT[e.category] || CAT.other;
+    return `<article class="card entry" data-id="${esc(e.id)}">
+      <button class="del" aria-label="Delete" title="Delete">🗑️</button>
+      <div class="meta"><span>${c[0]} ${esc(c[1])} · ${e.intensity}/10${e.shots ? ' · 📷' : ''}</span><span>${esc(new Date(e.t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }))}</span></div>
+      <h3>${esc(e.title)}</h3>
+      <dl>
+        <dt>What set it off</dt><dd>${esc(e.trigger)}</dd>
+        <dt>Possible reason it hit you</dt><dd>${esc(e.root_cause)}</dd>
+        <dt>How to avoid a repeat</dt><dd>${esc(e.avoid)}</dd>
+        <dt>Next step</dt><dd>${esc(e.next_step)}</dd>
+      </dl>
+      <p class="muted" style="margin-top:10px">💭 ${esc(e.reframe)}</p>
+      <details><summary>Read the conversation</summary><div class="tx">${(e.transcript || []).map((m) => `<p><b>${m.role === 'user' ? 'You' : 'Listener'}:</b> ${esc(m.text)}</p>`).join('')}</div></details>
+    </article>`;
+  }).join('');
+  $$('.entry .del', el).forEach((b) => (b.onclick = () => {
+    if (!confirm('Delete this saved chat?')) return;
+    const id = b.closest('.entry').dataset.id;
+    lsSet(LOG_KEY, lsGet(LOG_KEY, []).filter((x) => x.id !== id));
+    if (state.entryId === id) { state.entryId = null; persist(); }
+    renderHistory();
+  }));
+}
+$('#export').onclick = () => {
+  const blob = new Blob([JSON.stringify(lsGet(LOG_KEY, []), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'wahala-history.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#clear').onclick = () => { if (confirm('Delete ALL saved chats? This cannot be undone.')) { lsSet(LOG_KEY, []); state.entryId = null; persist(); renderHistory(); } };
+
+/* ---------- Tabs ---------- */
+function switchView(name) {
+  $$('.tab').forEach((t) => { const on = t.dataset.view === name; t.classList.toggle('active', on); t.setAttribute('aria-selected', on); });
+  $$('.view').forEach((v) => v.classList.toggle('active', v.id === 'view-' + name));
+  if (name === 'insights') renderInsights();
+  if (name === 'history') renderHistory();
+  window.scrollTo({ top: 0 });
+}
+$$('.tab').forEach((t) => (t.onclick = () => switchView(t.dataset.view)));
+
+/* ---------- Breathing ---------- */
+const dlg = $('#breathe'), orb = $('#orb'), orbText = $('#orb-text');
+let bt = null;
+const stopBreathe = () => { clearTimeout(bt); orb.className = 'orb'; orbText.textContent = 'Ready'; $('#breathe-start').textContent = 'Start'; };
+function runBreathe() {
+  let cycles = 0;
+  const step = (p) => {
+    if (p === 'in') { orb.className = 'orb in'; orbText.textContent = 'Breathe in'; bt = setTimeout(() => step('hold'), 4000); }
+    else if (p === 'hold') { orb.className = 'orb hold'; orbText.textContent = 'Hold'; bt = setTimeout(() => step('out'), 4000); }
+    else { orb.className = 'orb out'; orbText.textContent = 'Breathe out'; bt = setTimeout(() => { if (++cycles >= 4) { stopBreathe(); orbText.textContent = 'Well done 🌿'; } else step('in'); }, 6000); }
+  };
+  step('in');
+}
+$('#breathe-open').onclick = () => (dlg.showModal ? dlg.showModal() : dlg.setAttribute('open', ''));
+$('#breathe-start').onclick = () => { stopBreathe(); $('#breathe-start').textContent = 'Restart'; runBreathe(); };
+$('#breathe-close').onclick = () => { stopBreathe(); dlg.close(); };
+dlg.addEventListener('close', stopBreathe);
+
+/* ---------- Init ---------- */
+renderAll();
+if (chat.length) setTimeout(() => window.scrollTo({ top: document.body.scrollHeight }), 50);
+})();
+</script>
+</body>
+</html>
